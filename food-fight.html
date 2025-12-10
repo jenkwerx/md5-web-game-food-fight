@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Fight Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        #nameEntry {
+            display: block;
+        }
+        
+        #gameScreen, #winnerScreen {
+            display: none;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            margin-bottom: 20px;
+            resize: vertical;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #gameArea {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .player {
+            position: absolute;
+            padding: 10px 15px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            z-index: 1;
+        }
+        
+        .player:hover {
+            z-index: 1000;
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        
+        .player.eliminated {
+            opacity: 0.3;
+            text-decoration: line-through;
+        }
+        
+        .food-projectile {
+            position: absolute;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        #statusArea {
+            text-align: center;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+        
+        #roundInfo {
+            font-size: 24px;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        #eliminationInfo {
+            font-size: 22px;
+            color: #333;
+            line-height: 1.8;
+            font-weight: bold;
+        }
+        
+        .elimination-announcement {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 10px 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .hash-detail {
+            font-size: 12px;
+            color: #666;
+            font-family: 'Courier New', monospace;
+            margin-top: 5px;
+        }
+        
+        #winnerAnnouncement {
+            text-align: center;
+            font-size: 32px;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 30px;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .instruction {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="nameEntry">
+            <h1>🍎 Food Fight! 🍌</h1>
+            <p class="instruction">Enter player names, one per line:</p>
+            <textarea id="nameInput" placeholder="Bob Burger&#10;Sally Salad&#10;Pete Pizza&#10;Tammy Taco&#10;Frank Fries&#10;Cindy Sushi&#10;Danny Donut&#10;Wendy Waffle"></textarea>
+            <button onclick="startGame()">Start Game!</button>
+        </div>
+        
+        <div id="gameScreen">
+            <h1>🍎 Food Fight! 🍌</h1>
+            <div id="statusArea">
+                <div id="roundInfo"></div>
+                <div id="eliminationInfo"></div>
+            </div>
+            <div id="gameArea"></div>
+            <button id="throwButton" onclick="celebrateWinner()">🍕 Throw Food! 🍕</button>
+        </div>
+        
+        <div id="winnerScreen">
+            <h1>🏆 Game Over! 🏆</h1>
+            <div id="winnerAnnouncement"></div>
+            <button onclick="returnToStart()">Play Again!</button>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+    <script>
+        let players = [];
+        let salt = '';
+        let round = 0;
+        let activePlayers = [];
+        
+        const foodEmojis = ['🍎', '🍌', '🍊', '🍇', '🍉', '🍓', '🍒', '🍑', '🥝', '🍅', '🥔', '🥕', '🌽', '🥒', '🥑', '🍆', '🥦', '🌶️', '🥜', '🍞'];
+        
+        const playerColors = [
+            '#FFE5B4', '#E0BBE4', '#FFDAC1', '#B4E7CE', '#C7CEEA',
+            '#FFD1DC', '#B5EAD7', '#FFF4A3', '#D4F1F4', '#FFCCF9',
+            '#C4FAF8', '#F8E1A6', '#E8D5C4', '#D5E8D4', '#F4E4C1',
+            '#E4D4F4', '#C1E1EC', '#FFE4E1', '#F0E5CF', '#E5F0E5'
+        ];
+        
+        function calcName(displayName) {
+            return displayName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+        
+        function generateSalt() {
+            const now = new Date();
+            return `${now.getFullYear()}~${String(now.getMonth() + 1).padStart(2, '0')}~${String(now.getDate()).padStart(2, '0')}~${String(now.getHours()).padStart(2, '0')}~${String(now.getMinutes()).padStart(2, '0')}~${String(now.getSeconds()).padStart(2, '0')}`;
+        }
+        
+        function startGame() {
+            const input = document.getElementById('nameInput').value.trim();
+            if (!input) {
+                alert('Please enter at least one name!');
+                return;
+            }
+            
+            const names = input.split('\n').map(n => n.trim()).filter(n => n);
+            
+            // Remove duplicates based on calcedname
+            const uniqueMap = new Map();
+            names.forEach(name => {
+                const calculated = calcName(name);
+                if (calculated && !uniqueMap.has(calculated)) {
+                    uniqueMap.set(calculated, name);
+                }
+            });
+            
+            if (uniqueMap.size < 2) {
+                alert('Please enter at least 2 unique names!');
+                return;
+            }
+            
+            players = Array.from(uniqueMap.values()).map(displayName => ({
+                displayName,
+                calcedName: calcName(displayName),
+                eliminations: 0
+            }));
+            
+            salt = generateSalt();
+            round = 0;
+            activePlayers = [...players];
+            
+            // Reset button text
+            document.getElementById('throwButton').textContent = '🍕 Throw Food! 🍕';
+            
+            document.getElementById('nameEntry').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            displayPlayers();
+            updateStatus();
+        }
+        
+        function displayPlayers() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+            
+            const areaWidth = gameArea.offsetWidth;
+            const areaHeight = gameArea.offsetHeight;
+            
+            // Estimate player bubble size with extra margin
+            const bubbleWidth = 160;
+            const bubbleHeight = 60;
+            const minSpacing = 15;
+            
+            // Use grid-based approach for better distribution
+            const cols = Math.floor(areaWidth / (bubbleWidth + minSpacing));
+            const rows = Math.floor(areaHeight / (bubbleHeight + minSpacing));
+            const totalSlots = cols * rows;
+            
+            // If we have more players than slots, use iterative placement
+            if (activePlayers.length > totalSlots) {
+                placePlayersIterative(gameArea, areaWidth, areaHeight, bubbleWidth, bubbleHeight, minSpacing);
+            } else {
+                placePlayersGrid(gameArea, areaWidth, areaHeight, bubbleWidth, bubbleHeight, minSpacing, cols, rows);
+            }
+        }
+        
+        function placePlayersGrid(gameArea, areaWidth, areaHeight, bubbleWidth, bubbleHeight, minSpacing, cols, rows) {
+            // Create array of all available grid positions
+            const availablePositions = [];
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    availablePositions.push({
+                        x: col * (bubbleWidth + minSpacing) + minSpacing,
+                        y: row * (bubbleHeight + minSpacing) + minSpacing
+                    });
+                }
+            }
+            
+            // Shuffle positions for random placement
+            for (let i = availablePositions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+            }
+            
+            activePlayers.forEach((player, index) => {
+                const pos = availablePositions[index];
+                createPlayerBubble(gameArea, player, pos.x, pos.y, index);
+            });
+        }
+        
+        function placePlayersIterative(gameArea, areaWidth, areaHeight, bubbleWidth, bubbleHeight, minSpacing) {
+            const positions = [];
+            const maxIterations = 1000;
+            
+            activePlayers.forEach((player, index) => {
+                let bestX, bestY;
+                let bestScore = -Infinity;
+                
+                // Try many random positions and pick the best one
+                for (let attempt = 0; attempt < maxIterations; attempt++) {
+                    const x = Math.random() * (areaWidth - bubbleWidth);
+                    const y = Math.random() * (areaHeight - bubbleHeight);
+                    
+                    // Check if this position overlaps with any existing positions
+                    let hasOverlap = false;
+                    let minDistanceToOthers = Infinity;
+                    
+                    for (let pos of positions) {
+                        const dx = Math.abs(x - pos.x);
+                        const dy = Math.abs(y - pos.y);
+                        
+                        // Check for overlap
+                        if (dx < (bubbleWidth + minSpacing) && dy < (bubbleHeight + minSpacing)) {
+                            hasOverlap = true;
+                            break;
+                        }
+                        
+                        // Calculate distance
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        minDistanceToOthers = Math.min(minDistanceToOthers, distance);
+                    }
+                    
+                    // Score this position (prefer no overlap and maximum distance from others)
+                    let score;
+                    if (hasOverlap) {
+                        score = -1; // Heavily penalize overlaps
+                    } else {
+                        score = minDistanceToOthers; // Prefer positions far from others
+                    }
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestX = x;
+                        bestY = y;
+                    }
+                    
+                    // If we found a good non-overlapping position, we can stop early
+                    if (!hasOverlap && attempt > 100) {
+                        break;
+                    }
+                }
+                
+                // If we still have overlap after all attempts, try to shift the position
+                if (bestScore === -1) {
+                    // Try shifting in different directions
+                    const shifts = [
+                        {dx: bubbleWidth + minSpacing, dy: 0},
+                        {dx: -(bubbleWidth + minSpacing), dy: 0},
+                        {dx: 0, dy: bubbleHeight + minSpacing},
+                        {dx: 0, dy: -(bubbleHeight + minSpacing)},
+                        {dx: bubbleWidth + minSpacing, dy: bubbleHeight + minSpacing},
+                    ];
+                    
+                    for (let shift of shifts) {
+                        const newX = Math.max(0, Math.min(areaWidth - bubbleWidth, bestX + shift.dx));
+                        const newY = Math.max(0, Math.min(areaHeight - bubbleHeight, bestY + shift.dy));
+                        
+                        let hasOverlap = false;
+                        for (let pos of positions) {
+                            const dx = Math.abs(newX - pos.x);
+                            const dy = Math.abs(newY - pos.y);
+                            if (dx < (bubbleWidth + minSpacing) && dy < (bubbleHeight + minSpacing)) {
+                                hasOverlap = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!hasOverlap) {
+                            bestX = newX;
+                            bestY = newY;
+                            break;
+                        }
+                    }
+                }
+                
+                positions.push({x: bestX, y: bestY});
+                createPlayerBubble(gameArea, player, bestX, bestY, index);
+            });
+        }
+        
+        function createPlayerBubble(gameArea, player, x, y, index) {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player';
+            playerDiv.id = `player-${player.calcedName}`;
+            
+            // Display name with elimination count
+            const displayText = `${player.displayName} (${player.eliminations})`;
+            playerDiv.textContent = displayText;
+            playerDiv.title = displayText; // Tooltip on hover
+            
+            // Assign a color from the palette
+            const colorIndex = index % playerColors.length;
+            playerDiv.style.backgroundColor = playerColors[colorIndex];
+            
+            playerDiv.style.left = x + 'px';
+            playerDiv.style.top = y + 'px';
+            
+            gameArea.appendChild(playerDiv);
+        }
+        
+        function updateStatus() {
+            document.getElementById('roundInfo').textContent = round === 0 ? 'Ready to start!' : `Round ${round}`;
+            if (round === 0) {
+                document.getElementById('eliminationInfo').innerHTML = `Salt: <span class="hash-detail">${salt}</span><br>${activePlayers.length} players remaining`;
+            }
+        }
+        
+        function throwFood() {
+            if (activePlayers.length <= 1) {
+                return;
+            }
+            
+            round++;
+            
+            // Calculate hashes for all active players
+            const playerHashes = activePlayers.map(player => {
+                const hashInput = `${round}~${salt}~${player.calcedName}`;
+                const hash = md5(hashInput);
+                return {
+                    player,
+                    hash,
+                    hashInput
+                };
+            });
+            
+            // Sort by hash
+            playerHashes.sort((a, b) => a.hash.localeCompare(b.hash));
+            
+            const lowestHash = playerHashes[0]; // Winner (thrower)
+            const highestHash = playerHashes[playerHashes.length - 1]; // Eliminated (target)
+            
+            // Find the actual player object in activePlayers and increment their count
+            const winnerInArray = activePlayers.find(p => p.calcedName === lowestHash.player.calcedName);
+            if (winnerInArray) {
+                winnerInArray.eliminations++;
+            }
+            
+            // Animate food throw from winner TO eliminated player
+            animateFoodThrow(lowestHash.player, highestHash.player);
+            
+            // Remove eliminated player
+            const eliminatedIndex = activePlayers.findIndex(p => p.calcedName === highestHash.player.calcedName);
+            activePlayers.splice(eliminatedIndex, 1);
+            
+            // Update display
+            setTimeout(() => {
+                const eliminatedDiv = document.getElementById(`player-${highestHash.player.calcedName}`);
+                if (eliminatedDiv) {
+                    eliminatedDiv.classList.add('eliminated');
+                }
+                
+                // Update the winner's display to show new elimination count
+                const winnerDiv = document.getElementById(`player-${lowestHash.player.calcedName}`);
+                if (winnerDiv && winnerInArray) {
+                    winnerDiv.textContent = `${winnerInArray.displayName} (${winnerInArray.eliminations})`;
+                    winnerDiv.title = `${winnerInArray.displayName} (${winnerInArray.eliminations})`;
+                }
+                
+                document.getElementById('roundInfo').textContent = `Round ${round} Complete`;
+                document.getElementById('eliminationInfo').innerHTML = `
+                    <div class="elimination-announcement">
+                        🎯 ${lowestHash.player.displayName} ELIMINATED ${highestHash.player.displayName}! 💥
+                    </div>
+                    <div class="hash-detail">
+                        Winner: ${lowestHash.hashInput} → ${lowestHash.hash}<br>
+                        Eliminated: ${highestHash.hashInput} → ${highestHash.hash}
+                    </div>
+                    <br>${activePlayers.length} player${activePlayers.length !== 1 ? 's' : ''} remaining
+                `;
+                
+                // Update button text if only one player left
+                if (activePlayers.length === 1) {
+                    document.getElementById('throwButton').textContent = '🎉 Celebrate Winner! 🎉';
+                }
+            }, 800);
+        }
+        
+        function celebrateWinner() {
+            if (activePlayers.length === 1) {
+                showWinner();
+            } else {
+                throwFood();
+            }
+        }
+        
+        function animateFoodThrow(fromPlayer, toPlayer) {
+            const fromDiv = document.getElementById(`player-${fromPlayer.calcedName}`);
+            const toDiv = document.getElementById(`player-${toPlayer.calcedName}`);
+            
+            const fromRect = fromDiv.getBoundingClientRect();
+            const toRect = toDiv.getBoundingClientRect();
+            const gameArea = document.getElementById('gameArea');
+            const gameRect = gameArea.getBoundingClientRect();
+            
+            const food = document.createElement('div');
+            food.className = 'food-projectile';
+            food.textContent = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+            food.style.left = (fromRect.left - gameRect.left + fromRect.width / 2) + 'px';
+            food.style.top = (fromRect.top - gameRect.top + fromRect.height / 2) + 'px';
+            
+            gameArea.appendChild(food);
+            
+            setTimeout(() => {
+                food.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                food.style.left = (toRect.left - gameRect.left + toRect.width / 2) + 'px';
+                food.style.top = (toRect.top - gameRect.top + toRect.height / 2) + 'px';
+                food.style.transform = 'rotate(360deg) scale(1.5)';
+            }, 50);
+            
+            setTimeout(() => {
+                food.remove();
+            }, 700);
+        }
+        
+        function showWinner() {
+            const winner = activePlayers[0];
+            
+            // Create food explosion
+            createFoodExplosion();
+            
+            setTimeout(() => {
+                document.getElementById('gameScreen').style.display = 'none';
+                document.getElementById('winnerScreen').style.display = 'block';
+                document.getElementById('winnerAnnouncement').textContent = `${winner.displayName} is the winner! 🎉`;
+            }, 2000);
+        }
+        
+        function createFoodExplosion() {
+            const gameArea = document.getElementById('gameArea');
+            const gameRect = gameArea.getBoundingClientRect();
+            
+            // Create 30 food items exploding outward
+            for (let i = 0; i < 30; i++) {
+                const food = document.createElement('div');
+                food.className = 'food-projectile';
+                food.textContent = foodEmojis[Math.floor(Math.random() * foodEmojis.length)];
+                
+                // Start from center
+                food.style.left = (gameRect.width / 2) + 'px';
+                food.style.top = (gameRect.height / 2) + 'px';
+                food.style.fontSize = (20 + Math.random() * 40) + 'px';
+                
+                gameArea.appendChild(food);
+                
+                // Random direction and distance
+                const angle = (Math.PI * 2 * i) / 30 + (Math.random() - 0.5) * 0.5;
+                const distance = 150 + Math.random() * 200;
+                const endX = (gameRect.width / 2) + Math.cos(angle) * distance;
+                const endY = (gameRect.height / 2) + Math.sin(angle) * distance;
+                
+                setTimeout(() => {
+                    food.style.transition = `all ${1 + Math.random()}s cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+                    food.style.left = endX + 'px';
+                    food.style.top = endY + 'px';
+                    food.style.transform = `rotate(${Math.random() * 720}deg) scale(${0.5 + Math.random()})`;
+                    food.style.opacity = '0';
+                }, 50);
+                
+                setTimeout(() => {
+                    food.remove();
+                }, 2000);
+            }
+        }
+        
+        function returnToStart() {
+            document.getElementById('winnerScreen').style.display = 'none';
+            document.getElementById('nameEntry').style.display = 'block';
+            document.getElementById('nameInput').value = players.map(p => p.displayName).join('\n');
+        }
+    </script>
+</body>
+</html>
